@@ -1,0 +1,21 @@
+services:
+  axonserver:
+    image: 'axoniq/axonserver:2025.1.4-nonroot'
+    ports:
+      - '8024:8024'  # HTTP port
+      - '8124:8124'  # gRPC port
+    environment:
+      axoniq_axonserver_standalone: true
+#    volumes:
+#      - ./axonserver/axoniq.license:/axonserver/config/axoniq.license  # uncomment if you have a license file
+  postgres-axon:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: cinema_db
+      POSTGRES_USER: cinema_user
+      POSTGRES_PASSWORD: cinema_password
+    ports:
+      - "6556:6556"
+    volumes:
+      - ./volumes/postgres-axon:/var/lib/postgresql/data
+    command: -p 6556

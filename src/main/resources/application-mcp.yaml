@@ -1,0 +1,8 @@
+spring:
+  ai:
+    mcp:
+      server:
+        enabled: true
+        name: Vertical Cinema MCP Server
+        version: "1.0.0"
+        instructions: "MCP server for the Vertical Cinema management."
