@@ -1,0 +1,140 @@
+server:
+  port: 3883
+spring:
+  application:
+    name: "Cinema.EventSourcing.VerticalSlice.Kotlin.Axon4.Spring"
+  threads:
+    virtual:
+      enabled: true
+  datasource:
+    url: jdbc:postgresql://localhost:6556/cinema_db
+    username: cinema_user
+    password: cinema_password
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    screening-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  ai:
+    chat:
+      observations:
+        log-prompt: true
+        log-completion: true
+      client:
+        observations:
+          log-prompt: true
+    anthropic:
+      api-key: ${ANTHROPIC_API_KEY:}
+      chat:
+        options:
+          model: claude-sonnet-4-20250514
+          temperature: 1.0
+          max-tokens: 3000
+axon:
+  axonserver:
+    enabled: false
+  eventhandling:
+    processors:
+      Projection_SeatsReadModel:
+        sequencing-policy: screeningSeatsReadModelProjectorSequencingPolicy
+        initial-segment-count: 2
+        token-claim-interval: 500
+      AI_Issue_Forwarder:
+        sequencing-policy: aiIssueForwardedSequencingPolicy
+        initial-segment-count: 2
+        token-claim-interval: 500
+      Automation_TrendingScreeningDetector:
+        sequencing-policy: treningScreeningReservationInHourAutomationSequencingPolicy
+        initial-segment-count: 2
+        token-claim-interval: 500
+  timeout:
+    enabled: false
+  serializer:
+    general: jackson
+    events: jackson
+    messages: jackson
+
+axoniq:
+  console:
+    application-name: VerticalCinema
+    credentials: ${AXONIQ_CONSOLE_API_KEY:}
+    dlq-mode: FULL
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+    tagsSorter: alpha
+    docExpansion: none
+  use-fqn: true
+
+app:
+  sample-data-init:
+    enabled: true
+
+slices:
+  dayschedule:
+    write:
+      cancelscreening:
+        enabled: true
+      schedulescreening:
+        enabled: true
+      createschedule:
+        enabled: true
+    read:
+      searchscreenings:
+        enabled: true
+      getschedulebyid:
+        enabled: true
+    automation:
+      whenscreeningscheduledthenplaceseats:
+        enabled: true
+  seatsblocking:
+    write:
+      blockseat:
+        enabled: true
+      blockseats:
+        enabled: true
+      placeseat:
+        enabled: true
+    automation:
+      trendsreporter:
+        enabled: true
+  adminnotifications:
+    write:
+      readnotification:
+        enabled: true
+      sendnotification:
+        enabled: true
+      starnotification:
+        enabled: true
+    automation:
+      notificationviaemail:
+        enabled: true
+  issues:
+    write:
+      openissue:
+        enabled: true
+    automation:
+      aiissueforwarder:
+        enabled: true
+  reservations:
+    write:
+      startreservation:
+        enabled: true
+      confirmseats:
+        enabled: true
+      cancelreservation:
+        enabled: true
+      collectreservation:
+        enabled: true
+    automation:
+      blockingseats:
+        enabled: true
+      reservationexpiration:
+        enabled: true

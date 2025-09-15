@@ -1,0 +1,4 @@
+package com.dddheroes.cinema.modules.adminnotifications.automation.notificationviasms
+
+private class WhenNotificationSentThenSendShortMessageService {
+}

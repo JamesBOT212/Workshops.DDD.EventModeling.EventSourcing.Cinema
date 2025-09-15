@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "Cinema": {
+      "type": "sse",
+      "url": "http://localhost:3883/sse"
+    }
+  }
+}

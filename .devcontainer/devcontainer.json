@@ -1,0 +1,98 @@
+{
+  "name": "Cinema Event Sourcing - Kotlin/Axon Dev Container",
+  "image": "mcr.microsoft.com/devcontainers/java:1-21-bullseye",
+  
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "version": "latest",
+      "enableNonRootDocker": "true",
+      "moby": "true"
+    },
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": "true",
+      "configureZshAsDefaultShell": "true",
+      "installOhMyZsh": "true",
+      "upgradePackages": "true"
+    }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "vscjava.vscode-java-pack",
+        "fwcd.kotlin",
+        "ms-vscode.vscode-gradle",
+        "redhat.vscode-yaml",
+        "ms-vscode.docker",
+        "bradlc.vscode-tailwindcss",
+        "esbenp.prettier-vscode"
+      ],
+      "settings": {
+        "java.configuration.runtimes": [
+          {
+            "name": "JavaSE-21",
+            "path": "/usr/local/sdkman/candidates/java/current"
+          }
+        ],
+        "java.import.gradle.enabled": true,
+        "kotlin.languageServer.enabled": true
+      }
+    },
+    "jetbrains": {
+      "backend": "IntelliJ",
+      "plugins": [
+        "com.intellij.java",
+        "org.jetbrains.kotlin", 
+        "org.jetbrains.plugins.gradle",
+        "com.intellij.database",
+        "Docker",
+        "org.axonframework.intellij.axoniq"
+      ]
+    }
+  },
+
+  "forwardPorts": [3883, 6556, 8024, 8124],
+  "portsAttributes": {
+    "3883": {
+      "label": "Cinema App",
+      "onAutoForward": "notify"
+    },
+    "6556": {
+      "label": "PostgreSQL",
+      "onAutoForward": "silent"
+    },
+    "8024": {
+      "label": "Axon Server HTTP",
+      "onAutoForward": "silent" 
+    },
+    "8124": {
+      "label": "Axon Server gRPC",
+      "onAutoForward": "silent"
+    }
+  },
+
+  "mounts": [
+    "source=cinema-gradle-cache,target=/home/vscode/.gradle,type=volume",
+    "source=dind-var-lib-docker-${devcontainerId},target=/var/lib/docker,type=volume"
+  ],
+
+  "containerEnv": {
+    "GRADLE_USER_HOME": "/home/vscode/.gradle",
+    "DOCKER_BUILDKIT": "1"
+  },
+
+  "remoteUser": "vscode",
+  "updateRemoteUserUID": true,
+
+  "onCreateCommand": {
+    "chown-gradle": "sudo chown vscode:vscode /home/vscode/.gradle",
+    "gradle-wrapper": "./gradlew wrapper --gradle-version=8.12"
+  },
+  "postCreateCommand": {
+    "start-services": "docker compose -f docker-compose.axon.yaml up -d",
+    "build-project": "./gradlew build --no-daemon -x test"
+  },
+  "postAttachCommand": "echo 'Container ready!",
+
+  "shutdownAction": "stopContainer"
+}

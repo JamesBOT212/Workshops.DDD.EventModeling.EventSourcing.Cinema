@@ -1,6 +1,26 @@
 package com.dddheroes.cinema
 
+import org.axonframework.test.server.AxonServerContainer
 import org.springframework.boot.test.context.TestConfiguration
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Profile
+import org.testcontainers.containers.PostgreSQLContainer
 
 @TestConfiguration(proxyBeanMethods = false)
-class TestcontainersConfiguration
+class TestcontainersConfiguration {
+
+    @Profile("testcontainers")
+    @Bean
+    @ServiceConnection
+    fun postgresContainer(): PostgreSQLContainer<*> {
+        return PostgreSQLContainer("postgres:latest")
+    }
+
+    @Profile("testcontainers & axonserver")
+    @Bean
+    @ServiceConnection
+    fun axonServerContainer(): AxonServerContainer {
+        return AxonServerContainer("axoniq/axonserver:latest").withDevMode(true)
+    }
+}
