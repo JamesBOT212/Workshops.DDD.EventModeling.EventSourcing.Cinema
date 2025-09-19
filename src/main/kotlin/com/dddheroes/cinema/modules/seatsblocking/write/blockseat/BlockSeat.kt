@@ -6,8 +6,8 @@ import com.dddheroes.cinema.modules.seatsblocking.events.SeatNotBlocked
 import com.dddheroes.cinema.modules.seatsblocking.events.SeatNotUnblocked
 import com.dddheroes.cinema.modules.seatsblocking.events.SeatPlaced
 import com.dddheroes.cinema.modules.seatsblocking.events.SeatUnblocked
-import com.dddheroes.cinema.shared.valueobjects.SeatNumber
 import com.dddheroes.cinema.shared.valueobjects.ScreeningId
+import com.dddheroes.cinema.shared.valueobjects.SeatNumber
 import com.dddheroes.sdk.application.CommandResult
 import com.dddheroes.sdk.application.inSingleStreamTransaction
 import com.dddheroes.sdk.application.resultOf
@@ -19,15 +19,17 @@ import org.axonframework.eventsourcing.eventstore.EventStore
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Component
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PutMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.ResponseStatus
+import org.springframework.web.bind.annotation.RestController
 import java.time.Clock
 import java.time.Instant
 
 data class BlockSeat(
-    val screeningId: ScreeningId,
-    val seat: SeatNumber,
-    val blockadeOwner: String,
-    val issuedAt: Instant
+    val screeningId: ScreeningId, val seat: SeatNumber, val blockadeOwner: String, val issuedAt: Instant
 )
 
 internal data class State(val placed: Boolean = false, val blockedBy: String? = null)
@@ -60,10 +62,7 @@ internal fun decide(command: BlockSeat, state: State): List<SeatEvent> {
     }
     return listOf(
         SeatBlocked(
-            command.screeningId,
-            command.seat,
-            command.blockadeOwner,
-            command.issuedAt
+            command.screeningId, command.seat, command.blockadeOwner, command.issuedAt
         )
     )
 }
@@ -84,7 +83,14 @@ private class BlockSeatCommandHandler(val eventStore: EventStore) {
 
     @CommandHandler
     fun handle(command: BlockSeat): CommandResult = resultOf {
-        // todo: implement application layer
+        val streamId = EventStreamId.of("Seat", command.screeningId, command.seat)
+
+        val events = eventStore.inSingleStreamTransaction<SeatEvent>(streamId) { events ->
+            val currentState = events.fold(State()) { state, event -> evolve(state, event) }
+            decide(command, currentState)
+        }
+
+        return events.toCommandResult()
     }
 
 }
@@ -104,9 +110,7 @@ internal class BlockSeatRestApi(
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PutMapping("/seats-blockades/{seat}")
     fun putSeatBlockade(
-        @PathVariable screeningId: ScreeningId,
-        @PathVariable seat: String,
-        @RequestBody requestBody: Body
+        @PathVariable screeningId: ScreeningId, @PathVariable seat: String, @RequestBody requestBody: Body
     ): CommandResult = CommandResult.Success // todo: execute command
 
 }
