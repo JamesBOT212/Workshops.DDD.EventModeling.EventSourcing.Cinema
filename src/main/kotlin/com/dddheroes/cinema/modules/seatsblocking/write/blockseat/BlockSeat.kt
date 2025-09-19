@@ -32,9 +32,51 @@ data class BlockSeat(
 
 internal data class State(val placed: Boolean = false, val blockedBy: String? = null)
 
-internal fun decide(command: BlockSeat, state: State): List<SeatEvent> = listOf()
+internal fun decide(command: BlockSeat, state: State): List<SeatEvent> {
+    if (!state.placed) {
+        return listOf(
+            SeatNotBlocked(
+                command.screeningId,
+                command.seat,
+                "Seat must be placed before it can be blocked",
+                command.blockadeOwner,
+                command.issuedAt
+            )
+        )
+    }
+    if (state.blockedBy.equals(command.blockadeOwner)) {
+        return emptyList()
+    }
+    if (state.blockedBy != null && state.blockedBy != command.blockadeOwner) {
+        return listOf(
+            SeatNotBlocked(
+                command.screeningId,
+                command.seat,
+                "Seat is already blocked by ${state.blockedBy}",
+                command.blockadeOwner,
+                command.issuedAt
+            )
+        )
+    }
+    return listOf(
+        SeatBlocked(
+            command.screeningId,
+            command.seat,
+            command.blockadeOwner,
+            command.issuedAt
+        )
+    )
+}
 
-internal fun evolve(state: State, event: SeatEvent): State = state
+internal fun evolve(state: State, event: SeatEvent): State {
+    return when (event) {
+        is SeatBlocked -> state.copy(blockedBy = event.blockadeOwner)
+        is SeatNotBlocked -> state
+        is SeatNotUnblocked -> state
+        is SeatPlaced -> state.copy(placed = true)
+        is SeatUnblocked -> state.copy(blockedBy = null)
+    }
+}
 
 @ConditionalOnProperty(name = ["slices.seatsblocking.write.blockseat.enabled"])
 @Component

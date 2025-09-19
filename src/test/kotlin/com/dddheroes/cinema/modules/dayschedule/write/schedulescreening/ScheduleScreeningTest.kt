@@ -25,7 +25,6 @@ class ScheduleScreeningTest : MessagingSpringBootTest() {
         val now = currentTime()
 
         val dayScheduleId = aDayScheduleId()
-        val day = LocalDate.of(2024, 1, 15)
         val screeningId = aScreeningId()
         val movieId = aMovieId()
         val startTime = LocalTime.of(20, 0)
