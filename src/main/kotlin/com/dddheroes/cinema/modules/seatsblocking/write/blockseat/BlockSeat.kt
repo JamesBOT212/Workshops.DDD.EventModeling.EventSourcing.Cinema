@@ -111,6 +111,10 @@ internal class BlockSeatRestApi(
     @PutMapping("/seats-blockades/{seat}")
     fun putSeatBlockade(
         @PathVariable screeningId: ScreeningId, @PathVariable seat: String, @RequestBody requestBody: Body
-    ): CommandResult = CommandResult.Success // todo: execute command
+    ): CommandResult {
 
+        return commandGateway.sendAndWait<CommandResult>(
+            BlockSeat(screeningId, SeatNumber.from(seat), requestBody.blockadeOwner, Instant.now(clock))
+        ).throwIfFailure()
+    }
 }
