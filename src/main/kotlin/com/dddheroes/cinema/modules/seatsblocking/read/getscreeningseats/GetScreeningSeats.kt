@@ -1,10 +1,10 @@
 package com.dddheroes.cinema.modules.seatsblocking.read.getscreeningseats
 
-import com.dddheroes.cinema.shared.valueobjects.ScreeningId
 import com.dddheroes.cinema.modules.seatsblocking.events.SeatBlocked
 import com.dddheroes.cinema.modules.seatsblocking.events.SeatEvent
 import com.dddheroes.cinema.modules.seatsblocking.events.SeatPlaced
 import com.dddheroes.cinema.modules.seatsblocking.events.SeatUnblocked
+import com.dddheroes.cinema.shared.valueobjects.ScreeningId
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
@@ -15,8 +15,8 @@ import org.axonframework.eventhandling.EventMessage
 import org.axonframework.eventhandling.ResetHandler
 import org.axonframework.eventhandling.async.SequencingPolicy
 import org.axonframework.extensions.kotlin.query
-import org.axonframework.queryhandling.QueryHandler
 import org.axonframework.queryhandling.QueryGateway
+import org.axonframework.queryhandling.QueryHandler
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -76,12 +76,30 @@ private class ScreeningSeatsReadModelProjector(
 
     @EventHandler
     fun handle(event: SeatBlocked) {
-
+        val screeningId = event.screeningId.raw
+        val state = repository.findById(screeningId).orElse(ScreeningSeatsReadModel(screeningId, emptyMap()))
+        val updatedState = state.copy(
+            seats = state.seats + (event.seat.toString() to ScreeningSeatsReadModel.Seat(
+                event.seat.row,
+                event.seat.column,
+                event.blockadeOwner
+            ))
+        )
+        repository.save(updatedState)
     }
 
     @EventHandler
     fun handle(event: SeatUnblocked) {
-
+        val screeningId = event.screeningId.raw
+        val state = repository.findById(screeningId).orElse(ScreeningSeatsReadModel(screeningId, emptyMap()))
+        val updatedState = state.copy(
+            seats = state.seats + (event.seat.toString() to ScreeningSeatsReadModel.Seat(
+                event.seat.row,
+                event.seat.column,
+                null
+            ))
+        )
+        repository.save(updatedState)
     }
 
     @ResetHandler
