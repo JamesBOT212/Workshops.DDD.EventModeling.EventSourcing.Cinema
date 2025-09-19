@@ -7,6 +7,7 @@ import com.dddheroes.cinema.modules.reservations.write.cancelreservation.CancelR
 import com.dddheroes.cinema.modules.reservations.write.confirmseats.ConfirmSeats
 import com.dddheroes.cinema.modules.seatsblocking.events.SeatBlocked
 import com.dddheroes.cinema.modules.seatsblocking.write.blockseats.BlockSeats
+import com.dddheroes.cinema.modules.seatsblocking.write.unblockseats.UnblockSeats
 import com.dddheroes.cinema.shared.valueobjects.ScreeningId
 import com.dddheroes.sdk.application.CommandResult
 import org.axonframework.commandhandling.gateway.CommandGateway
@@ -57,8 +58,13 @@ class BlockingReservationSeatsAutomation(private val commandGateway: CommandGate
 
     @EventHandler
     fun handle(event: ReservationCancelled) {
-        val reservationId = event.reservationId;
-        // Exercise: Unblock all requested seats. Unblocking a not-blocked seat should be OK.
+        val reservationId = event.reservationId
+        val command = UnblockSeats(
+            screeningId = ScreeningId.of(event.screeningId.raw),
+            seats = event.seats,
+            blockadeOwner = "Reservation:${reservationId}",
+            issuedAt = event.occurredAt
+        )
+        commandGateway.sendAndWait<CommandResult>(command).throwIfFailure()
     }
-
 }
